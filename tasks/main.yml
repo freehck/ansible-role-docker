@@ -1,0 +1,27 @@
+---
+- name: install docker
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+
+- name: set private docker registry
+  template:
+    src: docker-daemon.json.j2
+    dest: /etc/docker/daemon.json
+  notify: reload docker
+  when: set_registry and registry is defined
+
+- name: create user docker config directory
+  become_user: "{{config_user}}"
+  file:
+    path: ~/.docker
+    state: directory
+  when: set_registry and config_user is defined and registry is defined
+
+- name: set user auth for private registry
+  become_user: "{{config_user}}"
+  template:
+    src: docker-config.json.j2
+    dest: ~/.docker/config.json
+  when: set_registry and config_user is defined and registry is defined
